@@ -1,7 +1,7 @@
 
  LangChain | Ollama + Function Calling
 
-  完整的流程
+ Prompt Engineering Solution 完整的流程
 
   ┌─────────────────────────────────────────────────────────────┐
   │                    MCP Server                               │
@@ -74,3 +74,83 @@
   │  → requests.get("http://localhost:8000/products")           │
   │  → Flask API 返回产品列表                                   │
   └─────────────────────────────────────────────────────────────┘
+
+    📊 完整的调用链可视化
+
+  Ollama 返回
+    │
+    └─> initial_response = "<tool_call>...</tool_call>"
+          │
+          ▼
+  _extract_tool_calls()
+    │
+    └─> tool_calls = [{"name": "get_all_products", "arguments": {"limit": 100}}]
+          │
+          ▼
+  process_tool_call(tool_name, arguments)
+    │
+    └─> self.tools.execute_tool("get_all_products", {"limit": 100})
+          │
+          ▼
+  tools.execute_tool()（mapping 层）
+    │
+    ├─ if tool_name == "get_all_products":
+    │    │
+    │    └─> self.api_client.get_all_products(limit=100)
+    │
+    └─> return json.dumps({"success": True, "data": [...]})
+          │
+          ▼
+  api_client.get_all_products()
+    │
+    └─> self.get('/products')
+          │
+          └─> self._request('GET', '/products')
+                │
+                ├─ url = "http://localhost:8000/products"
+                │
+                └─> requests.get(url)
+                      │
+                      ▼
+                Flask API Server
+                      │
+                      └─> @products_bp.route('/', methods=['GET'])
+                            │
+                            ├─ query_db('SELECT * FROM products')
+                            │
+                            └─> return jsonify(products)
+                                  │
+                                  ▼
+                                返回 JSON 数据
+
+ 📝 完整例子追踪
+
+  输入："please list me all the product"
+
+  1. Ollama 理解需要 get_all_products
+     │
+  2. 返回：<tool_call>
+             {"name": "get_all_products", "arguments": {"limit": 100}}
+             </tool_call>
+     │
+  3. _extract_tool_calls() 提取：
+     tool_name = "get_all_products"
+     arguments = {"limit": 100}
+     │
+  4. tools.execute_tool("get_all_products", {"limit": 100})
+     │
+     ├─ 进入 if tool_name == "get_all_products":
+     │
+     ├─ limit = 100
+     │
+     ├─ result = api_client.get_all_products(limit=100)
+     │    │
+     │    └─ GET http://localhost:8000/products
+     │       │
+     │       └─ Flask API 返回：[产品列表]
+     │
+     └─ return json.dumps({"success": True, "data": [产品列表]})
+     │
+  5. 工具结果保存在 tool_results 中
+     │
+  6. 再次调用 Ollama，用工具结果生成最终回答
