@@ -1,0 +1,6 @@
+WovenID (Keycloak) is the identity service used across Woven, serving as the core of its authentication system and the central repository for all user information.
+In this demo, we will integrate WovenID with our demo application, ping-pong-demo. Whenever a user accesses ping-pong-demo via a browser, they will be prompted to log in first. 
+
+To support this scenario, two key components are involved
+Leonidas is WovenID’s OAuth 2.0 client management solution. By creating an OAuth2Client, your application is registered with WovenID, allowing it to integrate with the authentication system and securely access protected resources.
+Drako is the authorization system. It allows you to define DrakoPolicy and DrakoPolicyBinding resources to control access policy to your applications.

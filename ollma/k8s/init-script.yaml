@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ollama-init-script
+  namespace: ollama
+data:
+  init.sh: |
+    #!/bin/sh
+    set -e
+
+    MODEL="${MODEL_NAME:-llama3.1}"
+    EMBEDDING_MODEL="nomic-embed-text"
+
+    echo "=========================================="
+    echo "Ollama Init Container"
+    echo "LLM Model: ${MODEL}"
+    echo "Embedding Model: ${EMBEDDING_MODEL}"
+    echo "=========================================="
+
+    echo "Starting Ollama service..."
+    ollama serve > /tmp/ollama.log 2>&1 &
+    SERVE_PID=$!
+
+    # Wait for service
+    echo "Waiting for service to be ready..."
+    for i in $(seq 1 30); do
+      if ollama list >/dev/null 2>&1; then
+        echo "✓ Service ready"
+        break
+      fi
+      sleep 10
+    done
+
+    # Pull LLM model
+    if ollama list 2>/dev/null | grep -q "$MODEL"; then
+      echo "✓ LLM model already exists: ${MODEL}"
+    else
+      echo "Pulling LLM model: ${MODEL}"
+      ollama pull "$MODEL"
+      echo "✓ LLM model downloaded: ${MODEL}"
+    fi
+
+    # Pull embedding model
+    if ollama list 2>/dev/null | grep -q "$EMBEDDING_MODEL"; then
+      echo "✓ Embedding model already exists: ${EMBEDDING_MODEL}"
+    else
+      echo "Pulling embedding model: ${EMBEDDING_MODEL}"
+      ollama pull "$EMBEDDING_MODEL"
+      echo "✓ Embedding model downloaded: ${EMBEDDING_MODEL}"
+    fi
+
+    # Cleanup
+    kill $SERVE_PID 2>/dev/null || true
+
+    echo "=========================================="
+    echo "Init Complete - Both models ready"
+    echo "=========================================="

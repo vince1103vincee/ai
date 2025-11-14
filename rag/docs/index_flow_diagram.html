@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/index 命令流程圖 - RAG System</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .diagram-section {
+            display: none;
+        }
+
+        .diagram-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .section-description {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .code-location {
+            font-family: 'Courier New', monospace;
+            background: #f1f3f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #667eea;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 /index 命令流程圖</h1>
+            <p class="subtitle">RAG System - 完整執行流程詳解</p>
+        </header>
+
+        <nav>
+            <button class="tab-button active" onclick="showTab('overview')">總覽</button>
+            <button class="tab-button" onclick="showTab('detailed')">詳細流程</button>
+            <button class="tab-button" onclick="showTab('dataflow')">數據流轉</button>
+            <button class="tab-button" onclick="showTab('callstack')">調用堆疊</button>
+            <button class="tab-button" onclick="showTab('fileinteraction')">檔案互動</button>
+            <button class="tab-button" onclick="showTab('simple')">簡化版</button>
+        </nav>
+
+        <div class="content">
+            <!-- 總覽 -->
+            <div id="overview" class="diagram-section active">
+                <h2 class="section-title">📊 主流程圖（高階視圖）</h2>
+                <div class="section-description">
+                    <p>這個流程圖展示了從用戶輸入 <code>/index ./demo_docs</code> 到完成索引的主要步驟。</p>
+                    <p>包含命令解析、目錄驗證、文件處理、分塊、向量化等核心階段。</p>
+                </div>
+                <div class="mermaid">
+flowchart TD
+    Start([用戶輸入: /index ./demo_docs]) --> Input[rag_bot.py:146<br/>接收輸入]
+    Input --> Check{rag_bot.py:155<br/>是命令?}
+    Check -->|Yes| Parse[rag_bot.py:156<br/>分割命令參數]
+    Check -->|No| Query[處理一般查詢]
+
+    Parse --> Match{rag_bot.py:169<br/>匹配 /index?}
+    Match -->|Yes| Extract[rag_bot.py:175-176<br/>提取參數<br/>directory='./demo_docs'<br/>pattern='*.txt']
+    Match -->|No| Other[處理其他命令]
+
+    Extract --> Call1[rag_bot.py:177<br/>bot.index_directory<br/>directory, pattern]
+
+    Call1 --> DirCheck{rag_bot.py:63<br/>目錄存在?}
+    DirCheck -->|No| Error1[顯示錯誤訊息]
+    DirCheck -->|Yes| Call2[rag_bot.py:68<br/>engine.index_from_directory<br/>directory, pattern]
+
+    Call2 --> CreateProc[rag_engine.py:61-64<br/>創建 DocumentProcessor<br/>chunk_size=500<br/>chunk_overlap=50]
+
+    CreateProc --> LoadProc[rag_engine.py:66-68<br/>processor.load_and_process_directory<br/>directory, pattern]
+
+    LoadProc --> AddDocs[rag_engine.py:70<br/>vector_store.add_documents<br/>chunk_texts, chunk_metadata]
+
+    AddDocs --> SetFlag[rag_bot.py:69<br/>index_loaded = True]
+    SetFlag --> End([完成!])
+
+    style Start fill:#e1f5e1
+    style End fill:#e1f5e1
+    style Error1 fill:#ffe1e1
+                </div>
+            </div>
+
+            <!-- 詳細流程 -->
+            <div id="detailed" class="diagram-section">
+                <h2 class="section-title">🔬 詳細流程圖（包含所有子流程）</h2>
+                <div class="section-description">
+                    <p>這個流程圖展示了六個主要階段的詳細執行步驟，包含所有重要的代碼位置。</p>
+                    <p><strong>六大階段：</strong></p>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li>命令解析 <span class="code-location">rag_bot.py</span></li>
+                        <li>目錄驗證 <span class="code-location">rag_bot.py</span></li>
+                        <li>文件處理器初始化 <span class="code-location">rag_engine.py</span></li>
+                        <li>載入文件 <span class="code-location">document_processor.py</span></li>
+                        <li>文本分塊 <span class="code-location">document_processor.py</span></li>
+                        <li>向量化與儲存 <span class="code-location">vector_store.py</span></li>
+                    </ol>
+                </div>
+                <div class="mermaid">
+flowchart TD
+    Start([用戶輸入: /index ./demo_docs]) --> Phase1[第一階段: 命令解析]
+
+    subgraph Phase1_Detail[第一階段: 命令解析 rag_bot.py]
+        P1_1[line:146 input 接收輸入]
+        P1_2[line:155 檢查 startswith'/']
+        P1_3[line:156 split maxsplit=2]
+        P1_4[line:169 匹配 /index]
+        P1_5[line:175 directory = parts1]
+        P1_6[line:176 pattern = parts2 or '*.txt']
+        P1_7[line:177 呼叫 bot.index_directory]
+
+        P1_1 --> P1_2 --> P1_3 --> P1_4 --> P1_5 --> P1_6 --> P1_7
+    end
+
+    Phase1 --> Phase2[第二階段: 目錄驗證]
+
+    subgraph Phase2_Detail[第二階段: 目錄驗證 rag_bot.py]
+        P2_1[line:61 進入 index_directory]
+        P2_2[line:63 os.path.exists directory]
+        P2_3{目錄存在?}
+        P2_4[line:68 呼叫 engine.index_from_directory]
+        P2_5[line:69 設置 index_loaded = True]
+
+        P2_1 --> P2_2 --> P2_3
+        P2_3 -->|Yes| P2_4 --> P2_5
+        P2_3 -->|No| P2_Error[line:64 顯示錯誤]
+    end
+
+    Phase2 --> Phase3[第三階段: 文件處理器初始化]
+
+    subgraph Phase3_Detail[第三階段: RAG Engine rag_engine.py]
+        P3_1[line:45 進入 index_from_directory]
+        P3_2[line:61-64 創建 DocumentProcessor<br/>chunk_size=500<br/>chunk_overlap=50]
+        P3_3[line:66-68 呼叫<br/>processor.load_and_process_directory]
+        P3_4[line:70 呼叫<br/>vector_store.add_documents]
+
+        P3_1 --> P3_2 --> P3_3 --> P3_4
+    end
+
+    Phase3 --> Complete([完成索引!])
+
+    style Start fill:#e1f5e1
+    style Complete fill:#e1f5e1
+    style P2_Error fill:#ffe1e1
+                </div>
+            </div>
+
+            <!-- 數據流轉 -->
+            <div id="dataflow" class="diagram-section">
+                <h2 class="section-title">🔄 數據流轉圖</h2>
+                <div class="section-description">
+                    <p>這個流程圖展示了數據如何從輸入命令轉換為向量儲存。</p>
+                    <p>追蹤數據從文件系統 → 文件對象 → 分塊 → 嵌入向量 → 向量儲存庫的完整流程。</p>
+                </div>
+                <div class="mermaid">
+flowchart LR
+    subgraph Input[輸入數據]
+        I1["/index ./demo_docs"]
+        I2["directory = './demo_docs'<br/>pattern = '*.txt'"]
+    end
+
+    subgraph Files[文件系統]
+        F1[python_basics.txt<br/>567 字元]
+        F2[machine_learning.txt<br/>621 字元]
+        F3[rag_systems.txt<br/>685 字元]
+        F4[wovenid.txt]
+    end
+
+    subgraph Documents[文件對象]
+        D1["{'text': '...', 'metadata': {...}}"]
+        D2["{'text': '...', 'metadata': {...}}"]
+        D3["{'text': '...', 'metadata': {...}}"]
+        D4["{'text': '...', 'metadata': {...}}"]
+    end
+
+    subgraph Chunks[分塊結果]
+        C1[Chunk 0: 0-500 字元]
+        C2[Chunk 1: 450-567 字元]
+        C3[Chunk 2: 0-500 字元]
+        C4[Chunk 3: 450-621 字元]
+        C5[...]
+        C6[Chunk 14]
+    end
+
+    subgraph Embeddings[向量嵌入]
+        E1["[0.123, -0.456, ..., 0.789]<br/>768 維向量"]
+        E2["[0.234, -0.567, ..., 0.890]<br/>768 維向量"]
+        E3["[...]"]
+        E4["共 15 個向量"]
+    end
+
+    subgraph VectorStore[向量儲存庫]
+        V1[documents: List 15]
+        V2[embeddings: List 15]
+        V3[metadata: List 15]
+    end
+
+    I1 --> I2
+    I2 --> Files
+
+    F1 --> D1
+    F2 --> D2
+    F3 --> D3
+    F4 --> D4
+
+    D1 --> C1
+    D1 --> C2
+    D2 --> C3
+    D2 --> C4
+    D3 --> C5
+    D4 --> C6
+
+    C1 --> E1
+    C2 --> E2
+    C3 --> E3
+    C4 --> E4
+
+    E1 --> V1
+    E1 --> V2
+    C1 --> V3
+
+    E2 --> V1
+    E2 --> V2
+    C2 --> V3
+
+    style Input fill:#e3f2fd
+    style Files fill:#fff3e0
+    style Documents fill:#f3e5f5
+    style Chunks fill:#e8f5e9
+    style Embeddings fill:#fce4ec
+    style VectorStore fill:#e1f5e1
+                </div>
+            </div>
+
+            <!-- 調用堆疊 -->
+            <div id="callstack" class="diagram-section">
+                <h2 class="section-title">📚 函數調用堆疊圖</h2>
+                <div class="section-description">
+                    <p>這個流程圖展示了函數之間的調用關係，分為三個主要階段。</p>
+                    <p>可以看到從主循環到最終呼叫 Ollama API 的完整調用鏈。</p>
+                </div>
+                <div class="mermaid">
+flowchart TB
+    subgraph Stack["調用堆疊（載入階段）"]
+        direction TB
+        S1["main() - rag_bot.py:123"]
+        S2["while True - rag_bot.py:144"]
+        S3["input() - rag_bot.py:146"]
+        S4["bot.index_directory() - rag_bot.py:177"]
+        S5["engine.index_from_directory() - rag_bot.py:68"]
+        S6["processor.load_and_process_directory() - rag_engine.py:66"]
+        S7["load_directory() - document_processor.py:144"]
+        S8["load_text_file() - document_processor.py:92"]
+
+        S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+    end
+
+    subgraph Stack2["調用堆疊（分塊階段）"]
+        direction TB
+        T1["process_documents() - document_processor.py:148"]
+        T2["chunk_text() - document_processor.py:123"]
+        T3["while start < len(text) - document_processor.py:36"]
+
+        T1 --> T2 --> T3
+    end
+
+    subgraph Stack3["調用堆疊（向量化階段）"]
+        direction TB
+        U1["vector_store.add_documents() - rag_engine.py:70"]
+        U2["_get_embedding() - vector_store.py:38"]
+        U3["client.embeddings() - vector_store.py:21"]
+        U4["Ollama API HTTP POST"]
+
+        U1 --> U2 --> U3 --> U4
+    end
+
+    Stack --> Stack2 --> Stack3
+                </div>
+            </div>
+
+            <!-- 檔案互動 -->
+            <div id="fileinteraction" class="diagram-section">
+                <h2 class="section-title">🗂️ 檔案互動圖</h2>
+                <div class="section-description">
+                    <p>這個流程圖展示了各個 Python 檔案之間的協作關係。</p>
+                    <p>可以看到 rag_bot.py、rag_engine.py、document_processor.py、vector_store.py 如何互相配合。</p>
+                </div>
+                <div class="mermaid">
+graph LR
+    subgraph UserInput[用戶輸入]
+        UI[/index ./demo_docs]
+    end
+
+    subgraph RagBot[rag_bot.py]
+        RB1[main 123-246]
+        RB2[index_directory 61-73]
+    end
+
+    subgraph RagEngine[rag_engine.py]
+        RE1[index_from_directory 45-70]
+    end
+
+    subgraph DocProc[document_processor.py]
+        DP1[load_and_process_directory 132-151]
+        DP2[load_directory 75-105]
+        DP3[load_text_file 70-73]
+        DP4[process_documents 107-130]
+        DP5[chunk_text 19-68]
+    end
+
+    subgraph VecStore[vector_store.py]
+        VS1[add_documents 30-47]
+        VS2[_get_embedding 18-28]
+    end
+
+    subgraph FileSystem[文件系統]
+        FS1[demo_docs/python_basics.txt]
+        FS2[demo_docs/machine_learning.txt]
+        FS3[demo_docs/rag_systems.txt]
+        FS4[demo_docs/wovenid.txt]
+    end
+
+    subgraph OllamaAPI[Ollama API]
+        OA1[POST /api/embeddings]
+    end
+
+    UI --> RB1
+    RB1 --> RB2
+    RB2 --> RE1
+    RE1 --> DP1
+    DP1 --> DP2
+    DP2 --> DP3
+    DP3 --> FS1
+    DP3 --> FS2
+    DP3 --> FS3
+    DP3 --> FS4
+    DP1 --> DP4
+    DP4 --> DP5
+    RE1 --> VS1
+    VS1 --> VS2
+    VS2 --> OA1
+
+    style UserInput fill:#e1f5e1
+    style FileSystem fill:#fff3e0
+    style OllamaAPI fill:#e3f2fd
+                </div>
+            </div>
+
+            <!-- 簡化版 -->
+            <div id="simple" class="diagram-section">
+                <h2 class="section-title">✨ 簡化版流程圖（一頁視圖）</h2>
+                <div class="section-description">
+                    <p>這是最簡化的流程圖，適合快速理解整體流程。</p>
+                    <p>從用戶輸入到完成索引，一目了然！</p>
+                </div>
+                <div class="mermaid">
+flowchart TD
+    Start([👤 用戶輸入<br/>/index ./demo_docs])
+
+    Start --> A[📝 解析命令<br/>rag_bot.py:156<br/>提取 directory 和 pattern]
+
+    A --> B[✅ 驗證目錄<br/>rag_bot.py:63<br/>檢查 ./demo_docs 存在]
+
+    B --> C[🔧 初始化處理器<br/>rag_engine.py:61<br/>DocumentProcessor<br/>chunk_size=500, overlap=50]
+
+    C --> D[📂 載入文件<br/>document_processor.py:89<br/>掃描 *.txt 文件<br/>找到 4 個文件]
+
+    D --> E[📄 讀取內容<br/>document_processor.py:72<br/>讀取每個文件的文本]
+
+    E --> F[✂️ 文本分塊<br/>document_processor.py:36<br/>500 字元/塊，50 字元重疊<br/>產生 15 個 chunks]
+
+    F --> G[🔢 向量化<br/>vector_store.py:21<br/>呼叫 Ollama API<br/>生成 768 維向量]
+
+    G --> H[💾 儲存<br/>vector_store.py:40-42<br/>儲存到三個列表<br/>documents, embeddings, metadata]
+
+    H --> End([✅ 完成索引<br/>index_loaded = True])
+
+    style Start fill:#e1f5e1
+    style End fill:#e1f5e1
+    style D fill:#fff3e0
+    style G fill:#e3f2fd
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>📚 RAG System Flow Diagrams | 使用 Mermaid 繪製 | 2025</p>
+            <p style="margin-top: 10px; opacity: 0.8;">所有代碼位置都經過驗證，可以直接跳轉到對應文件查看</p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.diagram-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

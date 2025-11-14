@@ -1,0 +1,8 @@
+kubectl port-forward -n ollama svc/ollama-service 11434:11434
+
+
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3.1",
+  "prompt": "Holly is in Tokyo. any good ramen plance for her?",
+  "stream": false
+}'

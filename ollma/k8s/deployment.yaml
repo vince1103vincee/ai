@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: ollama
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      initContainers:
+      - name: init-model
+        image: ollama/ollama:latest
+        command: ["/bin/sh", "/scripts/init.sh"]
+        env:
+        - name: MODEL_NAME
+          value: "llama3.1"
+        volumeMounts:
+        - name: data
+          mountPath: /root/.ollama
+        - name: scripts
+          mountPath: /scripts
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1"
+          limits:
+            memory: "6Gi"
+            cpu: "2"
+      
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        ports:
+        - containerPort: 11434
+          name: http
+        volumeMounts:
+        - name: data
+          mountPath: /root/.ollama
+        resources:
+          requests:
+            memory: "6Gi"
+            cpu: "4"
+          limits:
+            memory: "10Gi"
+            cpu: "8"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 11434
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 11434
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: ollama-data
+      - name: scripts
+        configMap:
+          name: ollama-init-script
+          defaultMode: 0755
