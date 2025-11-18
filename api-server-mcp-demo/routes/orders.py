@@ -71,7 +71,7 @@ def get_user_orders(user_id, status=None, date_range=None):
     params = [user_id]
     
     if status:
-        query += ' AND o.status = ?'
+        query += ' AND LOWER(o.status) = LOWER(?)'
         params.append(status)
     
     if date_range:
@@ -101,7 +101,7 @@ def get_orders_by_status(status):
         SELECT o.*, u.name as user_name
         FROM orders o
         JOIN users u ON o.user_id = u.user_id
-        WHERE o.status = ?
+        WHERE LOWER(o.status) = LOWER(?)
         ORDER BY o.created_at DESC
     ''', (status,))
     return jsonify(orders)

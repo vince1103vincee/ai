@@ -28,17 +28,17 @@ def get_users():
     
     elif email:
         user = query_db(
-            'SELECT * FROM users WHERE email = ?',
+            'SELECT * FROM users WHERE LOWER(email) = LOWER(?)',
             (email,),
             one=True
         )
         if user:
             return jsonify(user)
         return jsonify({"error": "User not found"}), 404
-    
+
     elif name:
         users = query_db(
-            'SELECT * FROM users WHERE name LIKE ?',
+            'SELECT * FROM users WHERE LOWER(name) LIKE LOWER(?)',
             (f'%{name}%',)
         )
         if users:

@@ -29,23 +29,23 @@ def get_products():
     
     elif name:
         products = query_db(
-            'SELECT * FROM products WHERE name LIKE ?',
+            'SELECT * FROM products WHERE LOWER(name) LIKE LOWER(?)',
             (f'%{name}%',)
         )
         if products:
             return jsonify(products)
         return jsonify({"error": "No products found"}), 404
-    
+
     elif category:
         products = query_db(
-            'SELECT * FROM products WHERE category = ?',
+            'SELECT * FROM products WHERE LOWER(category) = LOWER(?)',
             (category,)
         )
         return jsonify(products)
-    
+
     elif brand:
         products = query_db(
-            'SELECT * FROM products WHERE brand = ?',
+            'SELECT * FROM products WHERE LOWER(brand) = LOWER(?)',
             (brand,)
         )
         return jsonify(products)
@@ -66,20 +66,3 @@ def get_product(product_id):
         return jsonify(product)
     return jsonify({"error": "Product not found"}), 404
 
-@products_bp.route('/category/<category>', methods=['GET'])
-def get_products_by_category(category):
-    """Get all products in a category"""
-    products = query_db(
-        'SELECT * FROM products WHERE category = ?',
-        (category,)
-    )
-    return jsonify(products)
-
-@products_bp.route('/brand/<brand>', methods=['GET'])
-def get_products_by_brand(brand):
-    """Get all products from a brand"""
-    products = query_db(
-        'SELECT * FROM products WHERE brand = ?',
-        (brand,)
-    )
-    return jsonify(products)
