@@ -12,6 +12,6 @@ env/
 *.swp
 *.note/
 *.secret/
-*.cladue
+*.claude/
 
 *node_modules/
