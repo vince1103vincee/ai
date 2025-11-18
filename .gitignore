@@ -13,3 +13,5 @@ env/
 *.note/
 *.secret/
 *.cladue
+
+*node_modules/
