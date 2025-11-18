@@ -9,20 +9,20 @@ orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
 @orders_bp.route('/', methods=['GET'])
 def get_orders():
     """
-    Get all orders or search by criteria
-    Query params: order_id, user_id, status, date_range
+    Get all orders or filter by criteria
+    Query params: user_id, user_name, status, date_range
     """
-    order_id = request.args.get('order_id')
     user_id = request.args.get('user_id')
+    user_name = request.args.get('user_name')
     status = request.args.get('status')
     date_range = request.args.get('date_range')
-    
-    if order_id:
-        return get_order_details(order_id)
-    
-    elif user_id:
-        return get_user_orders(user_id, status, date_range)
-    
+
+    if user_id or user_name:
+        return get_user_orders(user_id, user_name, status, date_range)
+
+    elif status:
+        return get_orders_by_status(status)
+
     else:
         orders = query_db('''
             SELECT o.*, u.name as user_name
@@ -60,8 +60,23 @@ def get_order_details(order_id):
     order['items'] = items
     return jsonify(order)
 
-def get_user_orders(user_id, status=None, date_range=None):
-    """Helper function to get user's orders"""
+def get_user_orders(user_id=None, user_name=None, status=None, date_range=None):
+    """Helper function to get user's orders by ID or name"""
+
+    # If user_name is provided, search for the user first
+    if user_name and not user_id:
+        users = query_db(
+            'SELECT user_id FROM users WHERE LOWER(name) LIKE LOWER(?)',
+            (f'%{user_name}%',)
+        )
+        if users and len(users) > 0:
+            user_id = users[0]['user_id']
+        else:
+            return jsonify({"error": f"User '{user_name}' not found"}), 404
+
+    if not user_id:
+        return jsonify({"error": "Either user_id or user_name must be provided"}), 400
+
     query = '''
         SELECT o.*, u.name as user_name
         FROM orders o
@@ -69,11 +84,11 @@ def get_user_orders(user_id, status=None, date_range=None):
         WHERE o.user_id = ?
     '''
     params = [user_id]
-    
+
     if status:
         query += ' AND LOWER(o.status) = LOWER(?)'
         params.append(status)
-    
+
     if date_range:
         if date_range == 'last_week':
             query += ' AND o.created_at >= datetime("now", "-7 days")'
@@ -81,18 +96,20 @@ def get_user_orders(user_id, status=None, date_range=None):
             query += ' AND o.created_at >= datetime("now", "-30 days")'
         elif date_range == 'last_year':
             query += ' AND o.created_at >= datetime("now", "-365 days")'
-    
+
     query += ' ORDER BY o.created_at DESC'
-    
+
     orders = query_db(query, params)
     return jsonify(orders)
 
 @orders_bp.route('/user/<user_id>', methods=['GET'])
 def get_orders_by_user(user_id):
-    """Get all orders for a user"""
+    """Get all orders for a user by ID
+    Query params: status, date_range
+    """
     status = request.args.get('status')
     date_range = request.args.get('date_range')
-    return get_user_orders(user_id, status, date_range)
+    return get_user_orders(user_id=user_id, status=status, date_range=date_range)
 
 @orders_bp.route('/status/<status>', methods=['GET'])
 def get_orders_by_status(status):

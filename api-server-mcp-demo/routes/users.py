@@ -10,23 +10,12 @@ users_bp = Blueprint('users', __name__, url_prefix='/users')
 def get_users():
     """
     Get all users or search by criteria
-    Query params: name, user_id, email
+    Query params: name, email
     """
     name = request.args.get('name')
-    user_id = request.args.get('user_id')
     email = request.args.get('email')
-    
-    if user_id:
-        user = query_db(
-            'SELECT * FROM users WHERE user_id = ?',
-            (user_id,),
-            one=True
-        )
-        if user:
-            return jsonify(user)
-        return jsonify({"error": "User not found"}), 404
-    
-    elif email:
+
+    if email:
         user = query_db(
             'SELECT * FROM users WHERE LOWER(email) = LOWER(?)',
             (email,),
@@ -44,7 +33,7 @@ def get_users():
         if users:
             return jsonify(users)
         return jsonify({"error": "No users found"}), 404
-    
+
     else:
         users = query_db('SELECT * FROM users LIMIT 100')
         return jsonify(users)

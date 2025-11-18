@@ -10,24 +10,13 @@ products_bp = Blueprint('products', __name__, url_prefix='/products')
 def get_products():
     """
     Get all products or search by criteria
-    Query params: name, product_id, category, brand
+    Query params: name, category, brand
     """
     name = request.args.get('name')
-    product_id = request.args.get('product_id')
     category = request.args.get('category')
     brand = request.args.get('brand')
-    
-    if product_id:
-        product = query_db(
-            'SELECT * FROM products WHERE product_id = ?',
-            (product_id,),
-            one=True
-        )
-        if product:
-            return jsonify(product)
-        return jsonify({"error": "Product not found"}), 404
-    
-    elif name:
+
+    if name:
         products = query_db(
             'SELECT * FROM products WHERE LOWER(name) LIKE LOWER(?)',
             (f'%{name}%',)
@@ -49,7 +38,7 @@ def get_products():
             (brand,)
         )
         return jsonify(products)
-    
+
     else:
         products = query_db('SELECT * FROM products LIMIT 100')
         return jsonify(products)
