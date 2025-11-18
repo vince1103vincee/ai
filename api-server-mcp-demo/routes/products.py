@@ -1,8 +1,13 @@
 """
 Product-related API routes
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from utils.db_helper import query_db
+from utils.response_helper import (
+    success_response,
+    not_found_response,
+    no_results_response
+)
 
 products_bp = Blueprint('products', __name__, url_prefix='/products')
 
@@ -21,27 +26,27 @@ def get_products():
             'SELECT * FROM products WHERE LOWER(name) LIKE LOWER(?)',
             (f'%{name}%',)
         )
-        if products:
-            return jsonify(products)
-        return jsonify({"error": "No products found"}), 404
+        if not products:
+            return no_results_response("products")
+        return success_response(products)
 
     elif category:
         products = query_db(
             'SELECT * FROM products WHERE LOWER(category) = LOWER(?)',
             (category,)
         )
-        return jsonify(products)
+        return success_response(products)
 
     elif brand:
         products = query_db(
             'SELECT * FROM products WHERE LOWER(brand) = LOWER(?)',
             (brand,)
         )
-        return jsonify(products)
+        return success_response(products)
 
     else:
         products = query_db('SELECT * FROM products LIMIT 100')
-        return jsonify(products)
+        return success_response(products)
 
 @products_bp.route('/<product_id>', methods=['GET'])
 def get_product(product_id):
@@ -52,6 +57,6 @@ def get_product(product_id):
         one=True
     )
     if product:
-        return jsonify(product)
-    return jsonify({"error": "Product not found"}), 404
+        return success_response(product)
+    return not_found_response("Product")
 

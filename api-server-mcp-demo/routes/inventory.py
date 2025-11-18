@@ -3,6 +3,10 @@ Inventory-related API routes
 """
 from flask import Blueprint, request, jsonify
 from utils.db_helper import query_db
+from utils.response_helper import (
+    success_response,
+    not_found_response
+)
 
 inventory_bp = Blueprint('inventory', __name__, url_prefix='/inventory')
 
@@ -35,7 +39,7 @@ def get_inventory():
     for inv in inventories:
         inv['available'] = inv['stock'] - inv['reserved']
 
-    return jsonify(inventories)
+    return success_response(inventories)
 
 @inventory_bp.route('/low-stock', methods=['GET'])
 def get_low_stock():
@@ -55,7 +59,7 @@ def get_low_stock():
     for inv in inventories:
         inv['available'] = inv['stock'] - inv['reserved']
 
-    return jsonify(inventories)
+    return success_response(inventories)
 
 @inventory_bp.route('/<product_id>', methods=['GET'])
 def get_product_inventory(product_id):
@@ -69,5 +73,5 @@ def get_product_inventory(product_id):
 
     if inventory:
         inventory['available'] = inventory['stock'] - inventory['reserved']
-        return jsonify(inventory)
-    return jsonify({"error": "Inventory not found"}), 404
+        return success_response(inventory)
+    return not_found_response("Inventory")

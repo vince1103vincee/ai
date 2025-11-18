@@ -1,8 +1,14 @@
 """
 User-related API routes
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from utils.db_helper import query_db
+from utils.response_helper import (
+    success_response,
+    not_found_response,
+    no_results_response,
+    validate_and_respond
+)
 
 users_bp = Blueprint('users', __name__, url_prefix='/users')
 
@@ -22,21 +28,21 @@ def get_users():
             one=True
         )
         if user:
-            return jsonify(user)
-        return jsonify({"error": "User not found"}), 404
+            return success_response(user)
+        return not_found_response("User")
 
     elif name:
         users = query_db(
             'SELECT * FROM users WHERE LOWER(name) LIKE LOWER(?)',
             (f'%{name}%',)
         )
-        if users:
-            return jsonify(users)
-        return jsonify({"error": "No users found"}), 404
+        if not users:
+            return no_results_response("users")
+        return success_response(users)
 
     else:
         users = query_db('SELECT * FROM users LIMIT 100')
-        return jsonify(users)
+        return success_response(users)
 
 @users_bp.route('/<user_id>', methods=['GET'])
 def get_user(user_id):
@@ -47,5 +53,5 @@ def get_user(user_id):
         one=True
     )
     if user:
-        return jsonify(user)
-    return jsonify({"error": "User not found"}), 404
+        return success_response(user)
+    return not_found_response("User")

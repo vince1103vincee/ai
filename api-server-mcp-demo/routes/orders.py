@@ -3,6 +3,12 @@ Order-related API routes
 """
 from flask import Blueprint, request, jsonify
 from utils.db_helper import query_db
+from utils.response_helper import (
+    success_response,
+    error_response,
+    not_found_response,
+    no_results_response
+)
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
 
@@ -48,17 +54,17 @@ def get_order_details(order_id):
     ''', (order_id,), one=True)
     
     if not order:
-        return jsonify({"error": "Order not found"}), 404
-    
+        return not_found_response("Order")
+
     items = query_db('''
         SELECT oi.*, p.name as product_name
         FROM order_items oi
         JOIN products p ON oi.product_id = p.product_id
         WHERE oi.order_id = ?
     ''', (order_id,))
-    
+
     order['items'] = items
-    return jsonify(order)
+    return success_response(order)
 
 def get_user_orders(user_id=None, user_name=None, status=None, date_range=None):
     """Helper function to get user's orders by ID or name"""
@@ -72,10 +78,10 @@ def get_user_orders(user_id=None, user_name=None, status=None, date_range=None):
         if users and len(users) > 0:
             user_id = users[0]['user_id']
         else:
-            return jsonify({"error": f"User '{user_name}' not found"}), 404
+            return not_found_response(f"User '{user_name}'")
 
     if not user_id:
-        return jsonify({"error": "Either user_id or user_name must be provided"}), 400
+        return error_response("Either user_id or user_name must be provided", 400)
 
     query = '''
         SELECT o.*, u.name as user_name
@@ -100,7 +106,7 @@ def get_user_orders(user_id=None, user_name=None, status=None, date_range=None):
     query += ' ORDER BY o.created_at DESC'
 
     orders = query_db(query, params)
-    return jsonify(orders)
+    return success_response(orders)
 
 @orders_bp.route('/user/<user_id>', methods=['GET'])
 def get_orders_by_user(user_id):
@@ -121,4 +127,4 @@ def get_orders_by_status(status):
         WHERE LOWER(o.status) = LOWER(?)
         ORDER BY o.created_at DESC
     ''', (status,))
-    return jsonify(orders)
+    return success_response(orders)
