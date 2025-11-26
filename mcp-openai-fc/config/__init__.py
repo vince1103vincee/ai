@@ -1,0 +1,10 @@
+"""Configuration module"""
+from .settings import OPENAI_API_KEY, OPENAI_MODEL, OPENAI_TEMPERATURE, API_SERVER_URL, API_SERVER_TIMEOUT
+
+__all__ = [
+    'OPENAI_API_KEY',
+    'OPENAI_MODEL',
+    'OPENAI_TEMPERATURE',
+    'API_SERVER_URL',
+    'API_SERVER_TIMEOUT',
+]
