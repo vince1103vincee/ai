@@ -1,0 +1,487 @@
+openapi: 3.1.0
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+  description: API Server for e-commerce product management system
+  title: Product Management API
+  version: '2.0'
+servers:
+- description: Development server
+  url: http://localhost:8000/v1
+- description: Production server
+  url: https://api.example.com/v1
+- description: Staging server
+  url: https://staging-api.example.com/v1
+paths:
+  /inventory/:
+    get:
+      parameters:
+      - description: Show only products with stock below this threshold
+        in: query
+        name: threshold
+        required: false
+        type: integer
+      responses:
+        '200':
+          description: List of inventory items
+          schema:
+            items:
+              properties:
+                available:
+                  type: integer
+                name:
+                  type: string
+                price:
+                  type: number
+                product_id:
+                  type: string
+                reserved:
+                  type: integer
+                stock:
+                  type: integer
+              type: object
+            type: array
+      summary: Get all inventory or filter by threshold
+  /inventory/low-stock:
+    get:
+      parameters:
+      - default: 20
+        description: Stock threshold (default 20)
+        in: query
+        name: threshold
+        required: false
+        type: integer
+      responses:
+        '200':
+          description: List of low stock inventory items
+          schema:
+            items:
+              properties:
+                available:
+                  type: integer
+                name:
+                  type: string
+                price:
+                  type: number
+                product_id:
+                  type: string
+                reserved:
+                  type: integer
+                stock:
+                  type: integer
+              type: object
+            type: array
+      summary: Get all products with low stock (< threshold)
+  /inventory/{product_id}:
+    get:
+      parameters:
+      - description: The product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Product inventory details
+          schema:
+            properties:
+              available:
+                type: integer
+              name:
+                type: string
+              price:
+                type: number
+              product_id:
+                type: string
+              reserved:
+                type: integer
+              stock:
+                type: integer
+            type: object
+        '404':
+          description: Inventory not found
+      summary: Get inventory for a specific product by ID
+  /orders/:
+    get:
+      parameters:
+      - description: Filter orders by user ID
+        in: query
+        name: user_id
+        required: false
+        type: string
+      - description: Filter orders by user name (case-insensitive partial match)
+        in: query
+        name: user_name
+        required: false
+        type: string
+      - description: Filter orders by status (pending, shipped, delivered, cancelled)
+        in: query
+        name: status
+        required: false
+        type: string
+      - description: Filter orders by date range
+        enum:
+        - last_week
+        - last_month
+        - last_year
+        in: query
+        name: date_range
+        required: false
+        type: string
+      responses:
+        '200':
+          description: List of orders
+          schema:
+            items:
+              properties:
+                created_at:
+                  type: string
+                order_id:
+                  type: string
+                status:
+                  type: string
+                total_amount:
+                  type: number
+                user_id:
+                  type: string
+                user_name:
+                  type: string
+              type: object
+            type: array
+        '404':
+          description: No orders found
+      summary: Get all orders or filter by criteria
+  /orders/status/{status}:
+    get:
+      parameters:
+      - description: The order status
+        enum:
+        - pending
+        - shipped
+        - delivered
+        - cancelled
+        in: path
+        name: status
+        required: true
+        type: string
+      responses:
+        '200':
+          description: List of orders with specified status
+          schema:
+            items:
+              properties:
+                order_id:
+                  type: string
+                status:
+                  type: string
+                total_amount:
+                  type: number
+                user_id:
+                  type: string
+                user_name:
+                  type: string
+              type: object
+            type: array
+        '404':
+          description: No orders found with this status
+      summary: Get all orders with a specific status
+  /orders/user/{user_id}:
+    get:
+      parameters:
+      - description: The user ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Filter by order status
+        in: query
+        name: status
+        required: false
+        type: string
+      - description: Filter by date range
+        enum:
+        - last_week
+        - last_month
+        - last_year
+        in: query
+        name: date_range
+        required: false
+        type: string
+      responses:
+        '200':
+          description: List of user orders
+          schema:
+            items:
+              type: object
+            type: array
+        '400':
+          description: Invalid parameters
+        '404':
+          description: User not found
+      summary: Get all orders for a user by ID
+  /orders/{order_id}:
+    get:
+      parameters:
+      - description: The order ID
+        in: path
+        name: order_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Order details with items
+          schema:
+            properties:
+              created_at:
+                type: string
+              items:
+                items:
+                  properties:
+                    order_item_id:
+                      type: string
+                    product_id:
+                      type: string
+                    product_name:
+                      type: string
+                    quantity:
+                      type: integer
+                  type: object
+                type: array
+              order_id:
+                type: string
+              status:
+                type: string
+              total_amount:
+                type: number
+              user_email:
+                type: string
+              user_id:
+                type: string
+              user_name:
+                type: string
+            type: object
+        '404':
+          description: Order not found
+      summary: Get order details by ID
+  /products/:
+    get:
+      operationId: list_products
+      parameters:
+      - description: Search products by name (case-insensitive partial match)
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+      - description: Filter products by category (case-insensitive exact match)
+        in: query
+        name: category
+        required: false
+        schema:
+          type: string
+      - description: Filter products by brand (case-insensitive exact match)
+        in: query
+        name: brand
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  properties:
+                    brand:
+                      type: string
+                    category:
+                      type: string
+                    name:
+                      type: string
+                    price:
+                      type: number
+                    product_id:
+                      type: string
+                  type: object
+                type: array
+          description: List of products
+        '404':
+          description: No products found
+      summary: Get all products or search by criteria
+      tags:
+      - Products
+  /products/{product_id}:
+    get:
+      operationId: get_product_by_id
+      parameters:
+      - description: The product ID
+        in: path
+        name: product_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Product details
+          schema:
+            properties:
+              brand:
+                type: string
+              category:
+                type: string
+              name:
+                type: string
+              price:
+                type: number
+              product_id:
+                type: string
+            type: object
+        '404':
+          description: Product not found
+      summary: Get product by ID
+      tags:
+      - Products
+  /stats/:
+    get:
+      responses:
+        '200':
+          description: System statistics summary
+          schema:
+            properties:
+              low_stock_products:
+                description: Number of products with stock below 20
+                type: integer
+              total_orders:
+                description: Total number of orders
+                type: integer
+              total_products:
+                description: Total number of products
+                type: integer
+              total_revenue:
+                description: Total revenue from completed orders
+                type: number
+              total_users:
+                description: Total number of users
+                type: integer
+            type: object
+      summary: Get overall system statistics
+  /stats/inventory:
+    get:
+      responses:
+        '200':
+          description: Inventory statistics summary
+          schema:
+            properties:
+              product_count:
+                description: Number of products in inventory
+                type: integer
+              total_available:
+                description: Total items available for sale (stock - reserved)
+                type: integer
+              total_reserved:
+                description: Total items reserved/on order
+                type: integer
+              total_stock:
+                description: Total items in stock across all products
+                type: integer
+            type: object
+      summary: Get inventory statistics overview
+  /stats/products:
+    get:
+      responses:
+        '200':
+          description: Product statistics by category
+          schema:
+            items:
+              properties:
+                avg_price:
+                  description: Average price of products in this category
+                  type: number
+                category:
+                  description: Product category
+                  type: string
+                max_price:
+                  description: Maximum price of products in this category
+                  type: number
+                min_price:
+                  description: Minimum price of products in this category
+                  type: number
+                product_count:
+                  description: Number of products in this category
+                  type: integer
+              type: object
+            type: array
+      summary: Get product statistics grouped by category
+  /stats/revenue:
+    get:
+      responses:
+        '200':
+          description: Revenue statistics by status
+          schema:
+            items:
+              properties:
+                order_count:
+                  description: Number of orders with this status
+                  type: integer
+                status:
+                  description: Order status
+                  type: string
+                total_revenue:
+                  description: Total revenue for this status
+                  type: number
+              type: object
+            type: array
+      summary: Get revenue statistics grouped by order status
+  /users/:
+    get:
+      parameters:
+      - description: Search users by name (case-insensitive partial match)
+        in: query
+        name: name
+        required: false
+        type: string
+      - description: Filter users by email (case-insensitive exact match)
+        in: query
+        name: email
+        required: false
+        type: string
+      responses:
+        '200':
+          description: List of users
+          schema:
+            items:
+              properties:
+                email:
+                  type: string
+                name:
+                  type: string
+                user_id:
+                  type: string
+              type: object
+            type: array
+        '404':
+          description: No users found
+      summary: Get all users or search by criteria
+  /users/{user_id}:
+    get:
+      parameters:
+      - description: The user ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: User details
+          schema:
+            properties:
+              email:
+                type: string
+              name:
+                type: string
+              user_id:
+                type: string
+            type: object
+        '404':
+          description: User not found
+      summary: Get user by ID

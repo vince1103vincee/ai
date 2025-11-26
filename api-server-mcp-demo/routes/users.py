@@ -16,7 +16,34 @@ users_bp = Blueprint('users', __name__, url_prefix='/users')
 def get_users():
     """
     Get all users or search by criteria
-    Query params: name, email
+    ---
+    parameters:
+      - name: name
+        in: query
+        type: string
+        required: false
+        description: Search users by name (case-insensitive partial match)
+      - name: email
+        in: query
+        type: string
+        required: false
+        description: Filter users by email (case-insensitive exact match)
+    responses:
+      200:
+        description: List of users
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+      404:
+        description: No users found
     """
     name = request.args.get('name')
     email = request.args.get('email')
@@ -46,7 +73,30 @@ def get_users():
 
 @users_bp.route('/<user_id>', methods=['GET'])
 def get_user(user_id):
-    """Get user by ID"""
+    """
+    Get user by ID
+    ---
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+        description: The user ID
+    responses:
+      200:
+        description: User details
+        schema:
+          type: object
+          properties:
+            user_id:
+              type: string
+            name:
+              type: string
+            email:
+              type: string
+      404:
+        description: User not found
+    """
     user = query_db(
         'SELECT * FROM users WHERE user_id = ?',
         (user_id,),

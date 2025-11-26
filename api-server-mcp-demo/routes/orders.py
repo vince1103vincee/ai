@@ -16,7 +16,51 @@ orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
 def get_orders():
     """
     Get all orders or filter by criteria
-    Query params: user_id, user_name, status, date_range
+    ---
+    parameters:
+      - name: user_id
+        in: query
+        type: string
+        required: false
+        description: Filter orders by user ID
+      - name: user_name
+        in: query
+        type: string
+        required: false
+        description: Filter orders by user name (case-insensitive partial match)
+      - name: status
+        in: query
+        type: string
+        required: false
+        description: Filter orders by status (pending, shipped, delivered, cancelled)
+      - name: date_range
+        in: query
+        type: string
+        enum: [last_week, last_month, last_year]
+        required: false
+        description: Filter orders by date range
+    responses:
+      200:
+        description: List of orders
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              order_id:
+                type: string
+              user_id:
+                type: string
+              user_name:
+                type: string
+              total_amount:
+                type: number
+              status:
+                type: string
+              created_at:
+                type: string
+      404:
+        description: No orders found
     """
     user_id = request.args.get('user_id')
     user_name = request.args.get('user_name')
@@ -41,7 +85,51 @@ def get_orders():
 
 @orders_bp.route('/<order_id>', methods=['GET'])
 def get_order(order_id):
-    """Get order details by ID"""
+    """
+    Get order details by ID
+    ---
+    parameters:
+      - name: order_id
+        in: path
+        type: string
+        required: true
+        description: The order ID
+    responses:
+      200:
+        description: Order details with items
+        schema:
+          type: object
+          properties:
+            order_id:
+              type: string
+            user_id:
+              type: string
+            user_name:
+              type: string
+            user_email:
+              type: string
+            total_amount:
+              type: number
+            status:
+              type: string
+            created_at:
+              type: string
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  order_item_id:
+                    type: string
+                  product_id:
+                    type: string
+                  product_name:
+                    type: string
+                  quantity:
+                    type: integer
+      404:
+        description: Order not found
+    """
     return get_order_details(order_id)
 
 def get_order_details(order_id):
@@ -110,8 +198,37 @@ def get_user_orders(user_id=None, user_name=None, status=None, date_range=None):
 
 @orders_bp.route('/user/<user_id>', methods=['GET'])
 def get_orders_by_user(user_id):
-    """Get all orders for a user by ID
-    Query params: status, date_range
+    """
+    Get all orders for a user by ID
+    ---
+    parameters:
+      - name: user_id
+        in: path
+        type: string
+        required: true
+        description: The user ID
+      - name: status
+        in: query
+        type: string
+        required: false
+        description: Filter by order status
+      - name: date_range
+        in: query
+        type: string
+        enum: [last_week, last_month, last_year]
+        required: false
+        description: Filter by date range
+    responses:
+      200:
+        description: List of user orders
+        schema:
+          type: array
+          items:
+            type: object
+      400:
+        description: Invalid parameters
+      404:
+        description: User not found
     """
     status = request.args.get('status')
     date_range = request.args.get('date_range')
@@ -119,7 +236,37 @@ def get_orders_by_user(user_id):
 
 @orders_bp.route('/status/<status>', methods=['GET'])
 def get_orders_by_status(status):
-    """Get all orders with a specific status"""
+    """
+    Get all orders with a specific status
+    ---
+    parameters:
+      - name: status
+        in: path
+        type: string
+        required: true
+        enum: [pending, shipped, delivered, cancelled]
+        description: The order status
+    responses:
+      200:
+        description: List of orders with specified status
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              order_id:
+                type: string
+              user_id:
+                type: string
+              user_name:
+                type: string
+              total_amount:
+                type: number
+              status:
+                type: string
+      404:
+        description: No orders found with this status
+    """
     orders = query_db('''
         SELECT o.*, u.name as user_name
         FROM orders o

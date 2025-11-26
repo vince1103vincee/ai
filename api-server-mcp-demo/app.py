@@ -3,6 +3,7 @@ Main Flask application
 """
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flasgger import Swagger
 from datetime import datetime
 
 from config import config
@@ -19,7 +20,35 @@ def create_app(config_object=config):
     
     # Initialize CORS
     CORS(app, resources={r"/*": {"origins": config_object.CORS_ORIGINS}})
-    
+
+    # Initialize Swagger/OpenAPI (3.1.0 format)
+    swagger = Swagger(app, template={
+        "openapi": "3.1.0",
+        "info": {
+            "title": "Product Management API",
+            "version": "2.0",
+            "description": "API Server for e-commerce product management system",
+            "contact": {
+                "name": "API Support",
+                "email": "support@example.com"
+            }
+        },
+        "servers": [
+            {
+                "url": "http://localhost:8000/v1",
+                "description": "Development server"
+            },
+            {
+                "url": "https://api.example.com/v1",
+                "description": "Production server"
+            },
+            {
+                "url": "https://staging-api.example.com/v1",
+                "description": "Staging server"
+            }
+        ]
+    })
+
     # Register database teardown
     app.teardown_appcontext(close_db)
     
