@@ -1,0 +1,238 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_all_products",
+      "description": "Get all products from the database",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of products to return, default is 100"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_product",
+      "description": "Get a specific product by its ID",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "The product ID, for example p001"
+          }
+        },
+        "required": ["product_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_products_by_name",
+      "description": "Search products by name with case-insensitive partial match",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Product name to search for"
+          }
+        },
+        "required": ["name"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_products_by_brand",
+      "description": "Search products by brand with case-insensitive match",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "brand": {
+            "type": "string",
+            "description": "Brand name to search for (e.g., Apple, Samsung, Sony, Dell)"
+          }
+        },
+        "required": ["brand"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_products_by_category",
+      "description": "Search products by category with case-insensitive match",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Product category to search for (e.g., Phone, Laptop, Tablet, Headphones)"
+          }
+        },
+        "required": ["category"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_all_users",
+      "description": "Get all users in the system",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_user",
+      "description": "Get a specific user by their ID",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The user ID, for example u001"
+          }
+        },
+        "required": ["user_id"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_users_by_name",
+      "description": "Search users by name with case-insensitive partial match",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User name to search for"
+          }
+        },
+        "required": ["name"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "search_users_by_email",
+      "description": "Search users by email address with case-insensitive match",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User email address to search for (e.g., john@example.com)"
+          }
+        },
+        "required": ["email"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_all_orders",
+      "description": "Get all orders in the system",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_user_orders",
+      "description": "Get all orders for a specific user by their ID or name - can search directly by user name without needing to find their ID first",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "The user ID (e.g., u001) - use this if you already know the user ID"
+          },
+          "user_name": {
+            "type": "string",
+            "description": "The user name (e.g., Bob Wang, John Smith) - use this to search for and get orders for a user by their name"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_inventory",
+      "description": "Get all inventory or filter by low stock threshold",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "integer",
+            "description": "Stock level threshold to filter low stock products (optional, default shows all)"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_product_inventory",
+      "description": "Get detailed inventory information for a specific product by ID or name",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "description": "The product ID (e.g., p001)"
+          },
+          "product_name": {
+            "type": "string",
+            "description": "The product name (e.g., iPad Air) - used if product_id is not provided"
+          }
+        },
+        "required": []
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "get_low_stock_products",
+      "description": "Get all products with stock level below a specified threshold",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "threshold": {
+            "type": "integer",
+            "description": "Stock threshold for identifying low stock products (default: 20)"
+          }
+        },
+        "required": []
+      }
+    }
+  }
+]
