@@ -9,4 +9,4 @@ venv/
 dist/
 build/
 .DS_Store
-*.note
+*.note.txt
